@@ -1,0 +1,28 @@
+{
+  "name": "hacp0012/quest",
+  "description": "Express router for accessing methods",
+  "type": "library",
+  "require": {
+    "php": ">=8.0"
+  },
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Hacp0012\\Quest\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "hacp0012",
+      "email": "princeieugene48@gmail.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Hacp0012\\Quest\\providers\\QuestProvider"
+      ]
+    }
+  }
+}
