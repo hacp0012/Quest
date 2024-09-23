@@ -3,6 +3,7 @@
 ![Generated ref code](./doc/assets/quest.png)
 
 EN - Access resources directly without defining routes
+
 FR - Accédez directement aux ressources sans définir des routes
 
 - [Introduction](#introdiction)
