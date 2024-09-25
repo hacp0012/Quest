@@ -671,7 +671,9 @@ class Quest
     $classInstance = null;
 
     $classConstructor = $class->getConstructor();
-    $classParams = $classConstructor->getParameters();
+    $classParams = [];
+
+    if ($classConstructor) $classConstructor->getParameters();
 
     if (count($classParams)) {
       if (count($constructionParam) && Arr::isAssoc($constructionParam) == false)
