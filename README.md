@@ -4,7 +4,9 @@
 
 Access resources directly without defining routes, thanks to PHP attributes.
 
-[▶️ French (doc) Readme here](./doc/fr.md)
+[**Site web documentation here**](https://hacp0012.github.io/Quest/)
+
+_[▶️ French Readme here](./doc/fr.md)_
 
 ---
 
