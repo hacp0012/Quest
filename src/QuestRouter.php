@@ -2,8 +2,12 @@
 
 namespace Hacp0012\Quest;
 
+use Hacp0012\Quest\core\Obstacle;
 use Hacp0012\Quest\core\QuestReturnVoid;
 use Hacp0012\Quest\core\QuestRoutes;
+use Hacp0012\Quest\core\SpawExplorer;
+use Illuminate\Support\Facades\Log;
+use ReflectionClass;
 
 class QuestRouter extends QuestRoutes
 {
@@ -75,5 +79,37 @@ class QuestRouter extends QuestRoutes
     }
 
     return $routesList;
+  }
+
+
+  /** Explore a folder if a folder is provided. */
+  static function exploreIfIsFolder(array $routes): array
+  {
+    $newList = [];
+    // dd($routes);
+
+    foreach($routes as $route) {
+      // dd(base_path($route));
+      try {
+        // Check if is class.
+        new ReflectionClass($route);
+
+        $newList[] = $route;
+      } catch(\Exception $e) {
+        // Check if is folder.
+        if (is_dir(base_path($route))) {
+          // Explore it.
+          $sp = new SpawExplorer;
+          $fitcheds = $sp->getSpaweds(base_path($route), scandir(base_path($route)));
+          $newList = array_merge($newList, $fitcheds);
+        } else {
+          throw new Obstacle(
+            message: "\"$route\" is not correct sub directory of Laravel project base path.",
+          );
+        }
+      }
+    }
+
+    return $newList;
   }
 }

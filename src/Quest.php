@@ -46,7 +46,7 @@ class Quest
    * @param string $uri
    * ⚠️ At any end of `uri` a `{quest_ref}` route parameter are append. Dont append it twice.
    *
-   * @param array<int, string> $routes An array of spawned class's.
+   * @param array<int, string> $routes An array of spawned class's or directories (paths) started at the Laravel base path `base_path()`.
    *
    * __Routes precedence__ :
    * 1. Local routes : defined in spawed $routes parameter.
@@ -91,6 +91,9 @@ class Quest
   /** Internal Main quest router */
   public function router(string $questId, array $classes): mixed
   {
+    /** Explore a folder if a folder is provided. */
+    $classes = QuestRouter::exploreIfIsFolder($classes);
+
     // loop in classes.
     foreach ($classes as $class) {
       try {
@@ -284,9 +287,12 @@ class Quest
     // Control Http quest method.
     $questMethod = request()->method();
     $questState = match ($questMethod) {
-      QuestSpawMethod::GET->name => true,
-      QuestSpawMethod::POST->name => true,
+      QuestSpawMethod::GET->name    => true,
+      QuestSpawMethod::POST->name   => true,
       QuestSpawMethod::DELETE->name => true,
+      QuestSpawMethod::PUT->name    => true,
+      QuestSpawMethod::HEAD->name   => true,
+      QuestSpawMethod::PATCH->name  => true,
 
       default => false,
     };

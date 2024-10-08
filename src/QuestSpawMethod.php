@@ -7,4 +7,7 @@ enum QuestSpawMethod
   case POST;
   case GET;
   case DELETE;
+  case PUT;
+  case HEAD;
+  case PATCH;
 }
