@@ -1,6 +1,6 @@
-# Quest
-
 ![Generated ref code](./doc/assets/quest.png)
+
+# Quest
 
 Access resources directly without defining routes, thanks to PHP attributes.
 
