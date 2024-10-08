@@ -1,4 +1,3 @@
 remote_theme: pages-themes/cayman@v0.2.0
 title: Quest
 description: Access resources directly without defining routes, thanks to PHP attributes.
-show_downloads: "false"
