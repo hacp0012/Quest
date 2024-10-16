@@ -6,7 +6,6 @@ use Hacp0012\Quest\core\Obstacle;
 use Hacp0012\Quest\core\QuestReturnVoid;
 use Hacp0012\Quest\core\QuestRoutes;
 use Hacp0012\Quest\core\SpawExplorer;
-use Illuminate\Support\Facades\Log;
 use ReflectionClass;
 
 class QuestRouter extends QuestRoutes
@@ -110,6 +109,8 @@ class QuestRouter extends QuestRoutes
       }
     }
 
-    return $newList;
+    $pirifieds = SpawExplorer::pirify($newList);
+
+    return $pirifieds;
   }
 }

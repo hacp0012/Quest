@@ -22,7 +22,7 @@ class QuestGenerateId extends Command
    *
    * @var string
    */
-  protected $description = 'Generate QUEST ID';
+  protected $description = 'Generate QUEST REFERENCE';
 
   /**
    * Execute the console command.

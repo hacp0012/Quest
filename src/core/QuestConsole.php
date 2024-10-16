@@ -36,9 +36,11 @@ class QuestConsole
   {
     $routes = QuestRouter::routesList();
 
-    $inBaseRouteRoutes = $this->getClassFromRoutes();
+    $inBaseRouteRoutes = QuestConsole::getClassFromRoutes();
 
     $routes = array_merge($routes, $inBaseRouteRoutes);
+
+    $routes = QuestRouter::exploreIfIsFolder($routes);
 
     $_className = null;
     $_classNamespace = null;
@@ -124,7 +126,7 @@ class QuestConsole
     ];
   }
 
-  private function getClassFromRoutes(): array
+  static function getClassFromRoutes(): array
   {
     $GLOBALS[QuestConsole::GLOBAL_TEMP_LIST] = [];
 

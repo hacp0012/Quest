@@ -2,10 +2,12 @@
 
 namespace Hacp0012\Quest\providers;
 
+use Hacp0012\Quest\Commands\QuestFind;
 use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Support\ServiceProvider;
 use Hacp0012\Quest\Commands\QuestGenerateId;
 use Hacp0012\Quest\Commands\QuestPublish;
+use Hacp0012\Quest\Commands\QuestRef;
 use Hacp0012\Quest\Commands\QuestTrackId;
 
 class QuestProvider extends ServiceProvider
@@ -30,6 +32,8 @@ class QuestProvider extends ServiceProvider
         QuestGenerateId::class,
         QuestPublish::class,
         QuestTrackId::class,
+        QuestFind::class,
+        QuestRef::class,
       ]);
     }
 

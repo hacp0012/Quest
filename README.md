@@ -16,10 +16,6 @@ _[▶️ French Readme here](./doc/fr.md)_
   - [The service container](#service_container)
 - [Runnig operation](#fonctionement)
 - [API reference](#api_ref)
-  - [Quest Spaw (attribut)](#quest_spaw)
-  - [Quest Spaw Class (attribut)](#quest_spaw_class)
-  - [Quest Router](#quest_route)
-  - [Console](#ref_console)
 - [FAQ](#faq)
 
 ## <span id='introdiction'>🪬Introdiction</span>
@@ -37,7 +33,7 @@ I know, it's not perfect, and neither is **Quest**, but... it will make your job
 ### Prerequisites
 
 - PHP 8.0+
-- Laravel minimum 9.x
+- Laravel 9.x+
 - Have already made use of the Facade Route. Ex: `Route::get('route/to/x/{param}', fn(string $param) => X)`
 
 ### Install Quest from composer
@@ -252,6 +248,8 @@ In any case feel free to do what you want.
 
 ## <span id="ref_console">👽 CLI Commandes</span>
 
+> `php artisan quest:ref [--list [--no-table] [--index=n]] [--generate=n] [--track='']` [see in doc.](./doc/refs/commands.md)
+
 > `php artisan quest:generate-ref [36] [--uuid]`
 
 Generate a reference key. But this does not prevent you from taking any text for reference. This is just a help, to allow you to do something unique.
@@ -284,116 +282,10 @@ _This is an internal command of Laravel_
 
 ## <span id="api_ref">🔆 Api reference</span>
 
-### <span id="quest_route">QuestRouter</span>
-
-```php
-QuestRouter(protected string $questRef, array $routes = [])
-```
-
-- @param string $questRef Reference ID.
-
-- @param array<int, string> $routes An array of spawned class's. But class's listed
-here are not visible by the Ref-Tracker in console. The Class referenced here are private to this route.
-If `$routes`is not empty, only the global routes`$routes` a accessible. The base routes quest are not quested.
-
-**Routes precedence** :
-
-1. Local routes : defined in spawed $routes parameter.
-2. Global Base routes : defined in your routes/quest.php.
-3. Defaults Global routes : default quest routes.
-
-### Quest Spaw
-
-Quest Router `QuesetRouter` short hand.
-
-```php
-static function spawn(string $uri = 'quest', array $routes = []): Illuminate\Routing\Route
-```
-
-Exemple :
-
-```php
-Quest::spawn(string $uri = 'quest', array $routes = [QuestTest:class]);
-
-# ⚠️ To use only in route file.
-```
-
-@param string $uri
-
-⚠️ At any end of `uri` a `{quest_ref}` route parameter are append. Dont append it twice.
-
-@param array<int, string> $routes An array of spawned class's or directories (paths) started at the Laravel project base path `base_path()`.
-
-### <span id="quest_spaw">QuestSpaw [Attribut]</span>
-
-Create a new Spaw Attribut instance.
-
-```php
-QuestSpaw(
-  string $ref,
-  ?QuestSpawMethod $method       = null,
-  string|null $filePocket        = null,
-  bool $jsonResponse             = true,
-  array|string|null $middleware  = null,
-  array $alias                   = [],
-)
-```
-
-@param string `$ref` Quest identifier. _Can be any text you want to use as an identifier_.
-
-- ⚠️ Avoid to put / (slash) in the ID String.
-
-@param string|null `$filePocket` The name of parameter that will receive file.
-
-- ⚠️ The method parameter name, not an alias name.
-- ⚠️ For this version, filePocket reference will receive a single `Illuminate\Http\UploadedFile` file.
-
-@param `QuestSpawMethod|null $method` Http method. supporteds [GET, POST and DELETE]. Default is `QuestSpawMethod::POST`. But you can change this behavior in quest config file.
-
-@param bool `$jsonResponse` The return value will be serealized as Json Response. Set it to `false` if you want to return un serealized data.
-
-@param array|string|null `$middleware` The name or array of middlewares.
-🏷️ Not that, the middlware is verified when the method provide a middleware.
-If the method middleware a provided and have not matched with route (request) middlewares, the method will
-not be called.
-
-@param array<string,string> `$alias` The spawed method aliases parameters names.
-
-- the `key` name is the name of the spawed method parameter and
-- the `value` is the alias ot this parameter name.
-
-⚠️ Alias affect the `$filePocket` name. In the filesPccket, use the original parameter name; not an alias.
-
-```php
-# Exemple:
-#[QuestSpaw(ref: 'RrOWXRfKOjauvSpc7y', alias: ['count'=> 'max_weight', 'state' => 'quality'])]
-function displayAnApples(int $count, string $color, string $state): View
-
-// désormais, le nom du paramètre `$count` devient `max_weight`
-```
-
-### <span id="quest_spaw_class">QuestSpawClass [Attribut]</span>
-
-Custruct the spawed class instance.
-
-```php
-QuestSpawClass(public array $constructWith = [])
-```
-
-@param array<string,mixed> $constructWith Is a list of argument to pass to the class constructor.
-
-- ⚠️ Only an _AsscoArray_ are allowed not indexed array.
-- ⚠️ Only primitve data are allowed in the constructWith array value.
-- 🚧 But you can use the sugar of Laravel Service Container in the class constructor.
-
-```php
-# Laravel Service Container Sugar :
-
-#[QuestSpawClass(['age' => 1])]
-class person {
- function __construct(Request $request, int $age) {...}
-}
-```
+- [Quest Attributs](./doc/refs/attributs.md)
+- [Quest class](./doc/refs/quest.md)
+- [Quest Router](./doc/refs/quester_router.md)
+- [CLI Commands](./doc/refs/commands.md)
 
 ## Best practices
 

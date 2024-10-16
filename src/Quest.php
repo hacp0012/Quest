@@ -154,7 +154,7 @@ class Quest
   }
 
   /** @param \ReflectionClass<object> $class */
-  function makeClassTrace($class): void
+  private function makeClassTrace($class): void
   {
     $line = $class->getStartLine();
     $filename = $class->getFileName();
@@ -164,7 +164,7 @@ class Quest
   }
 
   /** @param \ReflectionMethod $method */
-  function makeMethodTrace($method): void
+  private function makeMethodTrace($method): void
   {
     $line = $method->getStartLine();
     $filename = $method->getFileName();

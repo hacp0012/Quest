@@ -97,6 +97,18 @@ class SpawExplorer
     return $matcheds;
   }
 
+  static function pirify(array $list): array
+  {
+    $newList = [];
+
+    foreach ($list as $item) {
+      if (in_array($item, $list) && in_array($item, $newList)) continue;
+      else $newList[] = $item;
+    }
+
+    return $newList;
+  }
+
   /** Get spaweds class that containe spawed methods. */
   public function getSpaweds (string $base, array $dirs)
   {
