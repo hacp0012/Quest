@@ -31,7 +31,7 @@ Reference console manager.
 
 - `--list` `-l` : Print a list of all references.
   - `--no-table` `-e` Dont print results in a table.
-  - `--incex` `-i` Show only items of the specified index's. Separate index by comma --index=1,2,4
+  - `--index` `-i` Show only items of the specified index's. Separate index by comma --index=1,2,4
 - `--generate=n` `-g` : Generate a random refernce n is length of characters need to be generated.
 - `--g-uuid` `-u` : Generate a unique uuid refernce.
 - `--track=''` `-t` : Track a reference.
