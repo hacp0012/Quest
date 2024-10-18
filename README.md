@@ -1,4 +1,4 @@
-![Logo](./assets/quest.png)
+![Logo](./doc/assets/quest.png)
 
 # Quest
 
