@@ -46,15 +46,17 @@ class Quest
    * @param string $uri
    * ⚠️ At any end of `uri` a `{quest_ref}` route parameter are append. Dont append it twice.
    *
-   * @param array<int, string> $routes An array of spawned class's or directories (paths) started at the Laravel base path `base_path()`.
+   * @param string|array<int, string> $routes the (class name or directory) or an array of spawned class's, it can be directories (paths) started at the Laravel base path `base_path()`.
    *
    * __Routes precedence__ :
    * 1. Local routes : defined in spawed $routes parameter.
    * 2. Global Base routes : defined in your routes/quest.php.
    * 3. Defaults Global routes : default quest routes.
    */
-  static function spawn(string $uri = 'quest', array $routes = []): RoutingRoute
+  static function spawn(string $uri = 'quest', array|string $routes = []): RoutingRoute
   {
+    $routes = is_string($routes) ? [$routes] : $routes;
+
     # TRACKER :
     { # For console track ref -->:
       $vars = isset($GLOBALS[QuestConsole::GLOBAL_TEMP_LIST]) ? $GLOBALS[QuestConsole::GLOBAL_TEMP_LIST] : [];
