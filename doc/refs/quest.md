@@ -65,5 +65,3 @@ Route::get('/', function() {
   return $quest->router(questId: 'HhXEo0019', classes: [QuestDemo::class]);
 });
 ```
-
-🚧⚠️ _no good to use_
