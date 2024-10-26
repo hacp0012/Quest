@@ -1,4 +1,4 @@
-![Logo](./assets/quest.png)
+![Logo](./doc/assets/quest.png)
 
 # Quest
 
@@ -148,8 +148,18 @@ $routes = [
   Forest::class,
   # Or specifie a directory:
   // 'app/demo',
-];
+]; 
+
+# Or it can be only the class name.
+$routes = Forest::class; // Or directory.
+
 Quest::spawn(uri: 'quest', routes: $routes)->name('my.quest');
+
+# Or 
+
+Quest::spaw(uri: 'my/forest', [Forest::class, 'RrOWXRfKOjauvSpc7y']);
+// For direct call.
+// Note method name, this is `spaw`. 
 ```
 
 > **`Hacp0012\Quest`** is the main namespace. Contains the `Quest()` class and the `QuestRouter()` class and the `QuestSpawMethod` enum.

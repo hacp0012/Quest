@@ -34,6 +34,21 @@ Quest::spawn(uri: '/my/quest', routes: [QuestDemo::class]);
 # ⚠️ To use only in route file. 
 ```
 
+## spaw
+
+```php
+static function spaw(string $uri, string|array $spaw): RoutingRoute
+```
+
+Spaw a specific reference (call it directly). No quest reference key is required on request call.
+
+```php
+# Exemple: 
+Quest::spaw('my/quest', 'App\class@ref-id');
+
+Quest::spaw('my/quest', [className::class, 'ref-id']);
+```
+
 ## router
 
 Internal Main quest router

@@ -65,22 +65,107 @@ class Quest
     }
 
     // Bind routes to Route action closure {#fff, 11}
-    $anonymClass = new class($routes) {
-      function __construct(protected array $routes) {}
-    };
+    // $anonymClass = new class($routes) {
+    //   function __construct(protected array $routes) {}
+    // };
 
-    $closure = function (string $quest_ref) {
-      $questRouter = new QuestRouter(questRef: $quest_ref, routes: $this->{'routes'});
+    // $closure = function (string $quest_ref) {
+    //   $questRouter = new QuestRouter(questRef: $quest_ref, routes: $this->{'routes'});
 
-      return $questRouter->spawn();
-    };
+    //   return $questRouter->spawn();
+    // };
 
-    $bindedClosure = Closure::bind($closure, $anonymClass, $anonymClass);
+    // $bindedClosure = Closure::bind($closure, $anonymClass, $anonymClass);
 
     # ROUTER :
     if (Str::endsWith($uri, '/')) $uri = Str::replaceEnd('/', '', $uri);
 
-    $router = Route::any(uri: $uri . '/{quest_ref}', action: $bindedClosure);
+    // $router = Route::any(uri: $uri . '/{quest_ref}', action: $bindedClosure);
+    $router = Route::any(uri: $uri . '/{quest_ref}', action: function(string $quest_ref) use ($routes) {
+      $questRouter = new QuestRouter(questRef: $quest_ref, routes: $routes);
+
+      return $questRouter->spawn();
+    });
+
+    # END :
+    return $router;
+  }
+
+  /** Spaw a specific reference (call it directly).
+   *
+   * No quest reference key is needed on request call.
+   * Ex:
+   * ```php
+   * Quest::spaw('my/quest', 'App\class@ref-id');
+   *
+   * Quest::spaw('my/quest', [className::class, 'ref-id']);
+   * ```
+   */
+  static function spaw(string $uri, string|array $spaw): RoutingRoute
+  {
+    $routes = [];
+    $refKey = null;
+    if (is_string($spaw)) {
+      $exploed = null;
+
+      if (str_contains($spaw, '@')) {
+        $exploed = explode('@', $spaw);
+      } elseif (str_contains($spaw, ':')) {
+        $exploed = explode(':', $spaw);
+      } else {
+        // Throw Obstacle Exception.
+        throw new Obstacle(
+          message: "The spaw reference '$spaw' is not comform to the rule at uri : $uri. It must be separated by `:` or `@`. " .
+          "Ex: `classname@ref_key` or `classname::class . '@' . \$ref_key`",
+        );
+      }
+
+      $routes = [$exploed[0]];
+      $refKey = $exploed[1];
+    } else {
+      try {
+        new ReflectionClass($spaw[0]);
+      } catch(\Exception $e) {
+        throw new Obstacle(
+          message: "The class " . $spaw[0] . " is not valide class, please specify valide one. on uri : `$uri`",
+        );
+      }
+
+      $routes = [$spaw[0]];
+      $refKey = $spaw[1];
+    }
+
+    // ----------------------------------------------------- /
+
+    # TRACKER :
+    { # For console track ref -->:
+      $vars = isset($GLOBALS[QuestConsole::GLOBAL_TEMP_LIST]) ? $GLOBALS[QuestConsole::GLOBAL_TEMP_LIST] : [];
+
+      $GLOBALS[QuestConsole::GLOBAL_TEMP_LIST] = array_merge($routes, $vars);
+    }
+
+    // Bind routes to Route action closure {#fff, 11}
+    // $anonymClass = new class($routes, $refKey) {
+    //   function __construct(protected array $routes, protected string $refKey) {}
+    // };
+
+    // $closure = function () {
+    //   $questRouter = new QuestRouter(questRef: $this->{'refKey'}, routes: $this->{'routes'});
+
+    //   return $questRouter->spawn();
+    // };
+
+    // $bindedClosure = Closure::bind($closure, $anonymClass, $anonymClass);
+
+    # ROUTER :
+    if (Str::endsWith($uri, '/')) $uri = Str::replaceEnd('/', '', $uri);
+
+    // $router = Route::any(uri: $uri, action: $bindedClosure);
+    $router = Route::any(uri: $uri, action: function() use ($routes, $refKey) {
+      $questRouter = new QuestRouter(questRef: $refKey, routes: $routes);
+
+      return $questRouter->spawn();
+    });
 
     # END :
     return $router;
