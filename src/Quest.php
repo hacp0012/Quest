@@ -2,7 +2,6 @@
 
 namespace Hacp0012\Quest;
 
-use Closure;
 use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Support\Arr;
 use Reflection;
@@ -682,7 +681,8 @@ class Quest
         } elseif ($isAutoConstructable == false) {
           throw new Obstacle(
             "The type or some of them '" . implode('|', $arrayTypes) .
-              "' on the parameter '$paramName', are not supported or are not bound in The Service Container.",
+              "' on the parameter '$paramName', are not supported or are not bound in The Service Container. ".
+              "(May be this variable are not provided or are empty.)",
             file: $this->methodTrace['file'],
             line: $this->methodTrace['line'],
           );
@@ -766,7 +766,7 @@ class Quest
     $classConstructor = $class->getConstructor();
     $classParams = [];
 
-    if ($classConstructor) $classConstructor->getParameters();
+    if ($classConstructor) $classParams = $classConstructor->getParameters();
 
     if (count($classParams)) {
       if (count($constructionParam) && Arr::isAssoc($constructionParam) == false)
