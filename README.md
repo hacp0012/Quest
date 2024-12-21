@@ -294,6 +294,7 @@ _This is an internal command of Laravel_
 
 - [Quest Attributs](./doc/refs/attributs.md)
 - [Quest class](./doc/refs/quest.md)
+- [Quest response](./doc/refs/response.md)
 - [Quest Router](./doc/refs/quester_router.md)
 - [CLI Commands](./doc/refs/commands.md)
 
