@@ -18,6 +18,7 @@ use Hacp0012\Quest\Attributs\QuestSpawClass;
 use Hacp0012\Quest\core\QuestConsole;
 use Hacp0012\Quest\core\Obstacle;
 use Hacp0012\Quest\core\QuestReturnVoid;
+use Hacp0012\Quest\QuestResponse;
 use ReflectionIntersectionType;
 
 /** Quest core handler.
@@ -38,6 +39,8 @@ class Quest
 
   // QUEST ROUTE -->-------------------------------------------------------------- :
   // Quest::spaw('ref', middlware: []);
+
+  public string $ref;
 
   /**
    * Quest Router `QuesetRouter` short hand.
@@ -179,6 +182,9 @@ class Quest
   {
     /** Explore a folder if a folder is provided. */
     $classes = QuestRouter::exploreIfIsFolder($classes);
+
+    // Put ref key to global accessible.
+    $this->ref = $questId;
 
     // loop in classes.
     foreach ($classes as $class) {
@@ -819,8 +825,11 @@ class Quest
     $newMethodArgList = $this->intentionTypeChecker($this->intentionRequest(), $method, $method->getAttributes(QuestSpaw::class)[0]);
 
     // try {
+    $questResponse = new QuestResponse;
+
     // ! If wrapped in a Try blok, remember to rethrow the catched exception !
-    $result = $method->invokeArgs($classInstance, $newMethodArgList);
+    $resultFromResponse = $method->invokeArgs($classInstance, $newMethodArgList);
+    $result = $questResponse->setAdnGetIt(ref: $this->ref, response: $resultFromResponse);
     // } catch (\Exception $e) {
     // $methodName = $method->getName();
 
