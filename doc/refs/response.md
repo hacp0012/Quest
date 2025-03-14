@@ -5,6 +5,11 @@ QuestResponse allows you not to alter the business logic of your method as to th
 Set response for json response data type.
 ⚠️ To use only when response is json data format.
 
+```php
+  // Classe constructor.
+  new QuestResponse(private string|null $ref = null, private string $dataName = 'data')
+```
+
 ## parameters
 
 @param string $ref The quest ref. This should be the same as the one provided in QuestSpawn above the method. It is needed to identify which reference to assign the value of $model to and insert `$dataName` into it.
@@ -14,7 +19,7 @@ Set response for json response data type.
 @param array<mixed,mixed> $model By default its value is `data`. It will be pasted to the `$model` and it will contain the value retained by the method.
 
 ```php
-  public static function setForJson(string $ref, array $model = [], string $dataName = 'data'): void
+  public static function setForJson(string $ref, array $model = [], string $dataName = 'data'): QuestResponse
 ```
 
 Exemple :
@@ -25,12 +30,18 @@ public function countFruits(): int
 {
   QuestResponse::setForJson(ref: 'same.ref.5L3yEswk5nRgr7zW8p', model: ['success' => true], dataName: 'count');
 
+  // Or:
+  $responser = new QuestResponse(ref: 'same.ref.5L3yEswk5nRgr7zW8p');
+  $responser->addToModel(name: 'car', value: 'Benz');
+
+  $responser->success(true);
   return 18;
 }
 
 # The http response:
 {
   "success": true,
+  "car": "Benz",
   "count": 18
 }
 ```
