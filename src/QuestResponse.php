@@ -5,6 +5,9 @@ namespace Hacp0012\Quest;
 /**
  * Handle quest response.
  * And don't alter method return value (type).
+ *
+ * - Initialize this instance at the top in your function declaration.
+ * to be sure tha you use this ref.
  */
 class QuestResponse
 {
@@ -24,11 +27,21 @@ class QuestResponse
 
         $this->params['success'] = $this->_success;
 
-        $GLOBALS[QuestResponse::GLOBAL_REF_NAME] = [
-            'ref'           => $this->ref,
-            'data_name'     => $this->dataName,
-            'params'        => $this->params,
-        ];
+        # To avoid other colleds methods to set her ref.
+        if (isset($GLOBALS[QuestResponse::GLOBAL_REF_NAME]) == false) {
+            $GLOBALS[QuestResponse::GLOBAL_REF_NAME] = [
+                'ref'           => $this->ref,
+                'data_name'     => $this->dataName,
+                'params'        => $this->params,
+            ];
+        } elseif (isset($GLOBALS[QuestResponse::GLOBAL_REF_NAME]) && $GLOBALS[QuestResponse::GLOBAL_REF_NAME]['ref'] == $this->ref) {
+            $GLOBALS[QuestResponse::GLOBAL_REF_NAME] = [
+                'ref'           => $this->ref,
+                'data_name'     => $this->dataName,
+                'params'        => $this->params,
+            ];
+        }
+
     }
 
     /** Set success state. Default is TRUE. */
@@ -44,11 +57,11 @@ class QuestResponse
     }
 
     /** Add value to Model | Or set new model value. */
-    public function addToModel(string|null $name = null, mixed $value = null, array|null $resplaceModelWith = null): void
+    public function addToModel(string|null $name = null, mixed $value = null, array|null $replaceModelWith = null): void
     {
-        if ($name == null && $resplaceModelWith == null) return;
+        if ($name == null && $replaceModelWith == null) return;
 
-        if ($resplaceModelWith) $this->params = $resplaceModelWith;
+        if ($replaceModelWith) $this->params = $replaceModelWith;
         else $this->params[$name] = $value;
 
         $this->loadIt();
