@@ -5,6 +5,9 @@ QuestResponse allows you not to alter the business logic of your method as to th
 Set response for json response data type.
 ⚠️ To use only when response is json data format.
 
+- ⚠️ Initialize this instance at the top in your function declaration.
+to be sure tha you use this ref.
+
 ```php
   // Classe constructor.
   new QuestResponse(private string|null $ref = null, private string $dataName = 'data')
@@ -33,14 +36,18 @@ public function countFruits(): int
   // Or:
   $responser = new QuestResponse(ref: 'same.ref.5L3yEswk5nRgr7zW8p');
   $responser->addToModel(name: 'car', value: 'Benz');
+  # $responser->setData(...); // Is same.
 
   $responser->success(true);
+  # $responser->message("Good Thing."); // Is same.
+  $responser->setMessage("Good Thing.");
   return 18;
 }
 
 # The http response:
 {
   "success": true,
+  "message": "Good Thing.",
   "car": "Benz",
   "count": 18
 }

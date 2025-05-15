@@ -20,12 +20,14 @@ class QuestResponse
 
     private array $params = [];
     private bool $_success = true;
+    private string|null $_message = null;
 
     public function loadIt(): void
     {
         if ($this->ref === null) return;
 
         $this->params['success'] = $this->_success;
+        $this->params['message'] = $this->_message;
 
         # To avoid other colleds methods to set her ref.
         if (isset($GLOBALS[QuestResponse::GLOBAL_REF_NAME]) == false) {
@@ -65,6 +67,30 @@ class QuestResponse
         else $this->params[$name] = $value;
 
         $this->loadIt();
+    }
+
+    /** (Alias: addToModel) Add value to Model | Or set new model value. */
+    public function setData(string|null $name = null, mixed $value = null, array|null $replaceModelWith = null): void
+    {
+        $this->addToModel(name: $name, value: $value, replaceModelWith: $replaceModelWith);
+    }
+
+    /** Set message. default is NULL. */
+    public function message(string|null $message = null): string
+    {
+        if ($message !== null) {
+            $this->_message = $message;
+
+            $this->loadIt();
+        }
+
+        return $this->_message;
+    }
+
+    /** Alias: message. */
+    public function setMessage(string|null $message = null): string
+    {
+        return $this->message($message);
     }
 
     /**
