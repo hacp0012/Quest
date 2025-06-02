@@ -2,8 +2,6 @@
 
 namespace Hacp0012\Quest\core;
 
-use Illuminate\Support\Facades\Log;
-
 class SpawExplorer
 {
   /** Names of trackeds Attributs. */
@@ -29,11 +27,11 @@ class SpawExplorer
     $dirs = $this->removeParentFoldersIndicator($dirs);
 
     foreach ($dirs as $dir) {
-      if (is_file($base . '\\' . $dir)) {
-        if (pathinfo($base . '\\' . $dir)['extension'] == 'php') $collection[] = $base . '\\' . $dir;
+      if (is_file($base . '/' . $dir)) {
+        if (pathinfo($base . '/' . $dir)['extension'] == 'php') $collection[] = $base . '/' . $dir;
       }
-      elseif (is_dir($base . '\\' . $dir)) {
-        $files = $this->explore($base . '\\' . $dir, scandir($base . '\\' . $dir));
+      elseif (is_dir($base . '/' . $dir)) {
+        $files = $this->explore($base . '/' . $dir, scandir($base . '/' . $dir));
         $collection = array_merge($collection, $files);
       }
     }
@@ -55,7 +53,6 @@ class SpawExplorer
         }
       }
     }
-
     return $matcheds;
   }
 
