@@ -27,11 +27,11 @@ class SpawExplorer
     $dirs = $this->removeParentFoldersIndicator($dirs);
 
     foreach ($dirs as $dir) {
-      if (is_file($base . '/' . $dir)) {
-        if (pathinfo($base . '/' . $dir)['extension'] == 'php') $collection[] = $base . '/' . $dir;
+      if (is_file($base . DIRECTORY_SEPARATOR . $dir)) {
+        if (pathinfo($base . DIRECTORY_SEPARATOR . $dir)['extension'] == 'php') $collection[] = $base . DIRECTORY_SEPARATOR . $dir;
       }
-      elseif (is_dir($base . '/' . $dir)) {
-        $files = $this->explore($base . '/' . $dir, scandir($base . '/' . $dir));
+      elseif (is_dir($base . DIRECTORY_SEPARATOR . $dir)) {
+        $files = $this->explore($base . DIRECTORY_SEPARATOR . $dir, scandir($base . DIRECTORY_SEPARATOR . $dir));
         $collection = array_merge($collection, $files);
       }
     }
