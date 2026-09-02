@@ -1,6 +1,6 @@
 {
   "name": "hacp0012/quest",
-  "description": "Express router for accessing methods",
+  "description": "Expose Laravel methods as HTTP endpoints with PHP attributes, without declaring a route per action.",
   "type": "library",
   "require": {
     "php": ">=8.0"

@@ -1,337 +1,492 @@
-![Logo](./assets/quest.png)
+<p align="center">
+  <img src="./assets/quest.png" alt="Quest" width="160">
+</p>
 
-# Quest
+# Quest — documentation
 
-Access resources directly without defining routes, thanks to PHP attributes.
+Access a Laravel method over HTTP without declaring one route per action.
 
-_[▶️ French Readme here](./fr.md)_
+This guide is the full English documentation. For a shorter overview, see the [root README](../README.md). [Version française](./fr.md).
 
 ---
 
-- [Introduction](#introdiction)
-- [Instalation](#installation)
-- [Usage](#usage)
-  - [The service container](#service_container)
-- [Runnig operation](#fonctionement)
-- [API reference](#api_ref)
+- [What this package is](#what-this-package-is)
+- [Installation](#installation)
+- [Concepts](#concepts)
+- [Tutorial](#tutorial)
+- [Exposing a method](#exposing-a-method)
+- [Registering the endpoint](#registering-the-endpoint)
+- [Client calls](#client-calls)
+- [Parameters and types](#parameters-and-types)
+- [Files](#files)
+- [HTTP methods](#http-methods)
+- [Middleware](#middleware)
+- [Class construction](#class-construction)
+- [Responses](#responses)
+- [Global class list and directories](#global-class-list-and-directories)
+- [CLI tools](#cli-tools)
+- [Configuration](#configuration)
+- [Limitations](#limitations)
 - [FAQ](#faq)
+- [API reference](#api-reference)
 
-## <span id='introdiction'>🪬Introdiction</span>
+## What this package is
 
-Quest, the **Master Guru** which simplifies your quest, it gives you a short route to follow to reach your goal (resource).
+**Quest** is a Laravel package. It turns selected class methods into HTTP endpoints using PHP 8 attributes.
 
-I know, you don't need to lie to me 🤥, you have remembered when you are brainstorming to implement a functionality or recover resources and ask you: but ... **how do I will organize my Routes?**
+You do not write:
 
-The question of the routes, I do not hide you, me, it fucks the laziness. Because I must be defined a road for any call and suddenly I find myself with many of the defined Routes.
+```php
+Route::get('/forest/tree', [Forest::class, 'tree']);
+```
 
-I know, it's not perfect, and neither is **Quest**, but... it will make your job a lot easier and eliminates all that mental overload, useful but boring.
+You write this on the method:
 
-## <span id="installation">✨ Installation</span>
+```php
+#[QuestSpaw(ref: 'forest.tree', method: SpawMethod::GET)]
+public function tree(string $color): array { /* ... */ }
+```
 
-### Prerequisites
+…and you register **one** Quest URL:
 
-- PHP 8.0+
-- Laravel 9.x+
-- Have already made use of the Facade Route. Ex: `Route::get('route/to/x/{param}', fn(string $param) => X)`
+```php
+Quest::spawn(uri: 'quest', routes: [Forest::class]);
+```
 
-### Install Quest from composer
+A client then calls:
+
+```http
+GET /quest/forest.tree?color=green
+```
+
+Quest maps `color` onto `$color`, calls `Forest::tree()`, and returns JSON.
+
+That is the whole product: **attribute + reference key + one catch-all route**.
+
+It is useful when an app accumulates many small, named actions (lookups, toggles, RPC-style calls from a SPA or a mobile client) and the `routes/*.php` files become a catalogue you never want to maintain by hand.
+
+It is **not** a full REST framework. You still use Laravel routes when you need resource URLs, nested paths, or a public OpenAPI surface.
+
+## Installation
+
+Requires **PHP 8.0+** and **Laravel 9+**.
 
 ```bash
 composer require hacp0012/quest
 ```
 
-### Publish the config files
-
-Quest needs a few files to work properly.
-
 ```bash
 php artisan vendor:publish --tag=quest
 ```
 
-**The file route quest.php**
+| Published file | Purpose |
+| --- | --- |
+| `config/quest.php` | Default HTTP verb for `#[QuestSpaw]`, and route files scanned by the CLI tracker |
+| `routes/quest.php` | Optional global list of classes or directories |
 
-is a base file that can be useful to you to register your classes. Because the classes registered in this list are public of the second level, because they have a priority that comes after the list passed in your route `Quest:spaw(routes: [])`
+`php artisan quest:publish` creates `routes/quest.php` only.
 
-> These references are accessible from all requests.
+The service provider `Hacp0012\Quest\providers\QuestProvider` is auto-discovered by Laravel.
 
-**Experimental**: It is now possible to pass directories, whose base starts from the base directory (of the project) of Laraval.
-Very useful if you do not want to specify each time a class that contains your references, You just have to specify a directory or several directories.
+## Concepts
 
->Provided that the punched method is in a class and the class is in a namespace.
-_Only the first class is considered in a .php file_.
+| Term | Meaning |
+| --- | --- |
+| **Reference (`ref`)** | Public string that identifies a method. It is the last segment of `/quest/{quest_ref}`. |
+| **`#[QuestSpaw]`** | PHP attribute on a **method**. Marks it as callable over HTTP. |
+| **`#[QuestSpawClass]`** | PHP attribute on a **class**. Passes extra constructor values when Quest instantiates the class. |
+| **`Quest::spawn`** | Registers `ANY /{uri}/{quest_ref}` and looks up the method by `ref`. |
+| **`Quest::spaw`** | Registers `ANY /{uri}` bound to **one** class + `ref`. No `{quest_ref}` in the URL. |
+| **`filePocket`** | Name of the method parameter that receives an uploaded file. |
+| **`SpawMethod`** | Enum of allowed HTTP verbs. Prefer this over the deprecated `QuestSpawMethod`. |
 
-This file is generated automatically but you can generate it manually.
+Namespace of the attributes: `Hacp0012\Quest\Attributs` (that spelling).
 
-**The config quest.php**
+## Tutorial
 
-Contains some settings you can apply if you have made patterns in your project's bootstrap/provider.php for custom targeting of your route files (/routes/web.php or /routes/api.php).
+A complete path from empty class to HTTP call.
 
-Because Reference Tracker needs to know your targets to track your referenced (punched) methods.
-
-> To publish the configuration files type the command <kbd>php artisan vendor:publish<kbd>
-
-This will create the file `config/quest.php` (which contains some configuration bits) and the global quest routing file in `routes/quest.php`.
-
-_Manually, you can publish the config files like this <kbd>php artisan quest:publish</kbd> in the configs/ and routes/ directory manually._
-
-## 🏳️ How is it useful to me?
-
-Quest allows you to access resources or send your resources directly without worrying about Routes. You just need to set Reference Flags or Reference Marks using PHP attributes on your class methods and call 🤙 these methods directly, with the same parameters as those of the method.
-
-_Don't worry, you just need to respect the same types of parameters that you had defined on your method._
-
-Let's take for example, in a case where you are designing an application and reach a certain level where your application will need to retrieve an up-to-date list of telephone codes. You just have to create a method in a class, reference it and call it; without worrying about creating a route for it.
+**1. Create a class**
 
 ```php
+namespace App\Services;
+
+use Hacp0012\Quest\Attributs\QuestSpaw;
+use Hacp0012\Quest\SpawMethod;
+
 class PhoneHandler
 {
-  #[QuestSpaw(ref: 'r84d2S1tM')]
-  function getCodes(): array
-  {
-    //...
-  }
+    #[QuestSpaw(ref: 'phone.codes', method: SpawMethod::GET)]
+    public function getCodes(): array
+    {
+        return ['+243', '+33', '+1'];
+    }
+
+    #[QuestSpaw(ref: 'phone.lookup')]
+    public function lookup(string $number): array
+    {
+        return ['number' => $number, 'valid' => true];
+    }
 }
+```
+
+`phone.codes` is a GET with no body. `phone.lookup` uses the default verb (`POST` unless you changed the config).
+
+**2. Register Quest in a route file**
+
+```php
+use Hacp0012\Quest\Quest;
+use App\Services\PhoneHandler;
+
+Quest::spawn(uri: 'quest', routes: [PhoneHandler::class])
+    ->name('quest')
+    ->middleware('auth:sanctum');
+```
+
+**3. Call from the client**
+
+```http
+GET /quest/phone.codes
+```
+
+```http
+POST /quest/phone.lookup
+Content-Type: application/json
+
+{ "number": "+243800000000" }
+```
+
+That is enough to ship an endpoint. The rest of this guide covers the options around that core.
+
+## Exposing a method
+
+```php
+#[QuestSpaw(
+    ref: 'forest.tree',
+    method: SpawMethod::GET,   // optional, default POST
+    filePocket: null,          // optional, parameter that receives a file
+    jsonResponse: true,        // optional, wrap return value as JSON
+    middleware: null,          // optional, filter (see Middleware)
+    alias: [],                 // optional, PHP parameter name => name the client sends
+)]
+public function tree(string $color): array { /* ... */ }
+```
+
+Rules:
+
+- The method must be **public** (static is allowed).
+- `ref` can be any text except it should not contain `/`.
+- One `#[QuestSpaw]` per method is used (the first).
+- Duplicate `ref` values: the first match wins. Keep them unique.
+
+Readable refs are easier to debug than raw random strings:
 
 ```
+forest.tree.NAhLlRZW3g3Fbh30dZ
+orders.list.k3n9Qx
+```
+
+Generate the random part with `php artisan quest:generate-ref`.
+
+## Registering the endpoint
+
+### Many methods, one prefix — `spawn`
+
+```php
+Quest::spawn(string $uri = 'quest', array|string $routes = []): Illuminate\Routing\Route
+```
+
+- `$uri` becomes `/{uri}/{quest_ref}`. Do not put `{quest_ref}` yourself.
+- `$routes` is a class name, a directory path from `base_path()`, or an array of those.
+
+```php
+Quest::spawn('quest', Forest::class);
+Quest::spawn('quest', [Forest::class, PhoneHandler::class, 'app/Services']);
+```
+
+The return value is a Laravel `Route`. Chain `->name()`, `->middleware()`, `->withoutMiddleware()`, etc.
+
+### One method, one path — `spaw`
+
+```php
+Quest::spaw('phone/codes', [PhoneHandler::class, 'phone.codes']);
+Quest::spaw('phone/codes', 'App\Services\PhoneHandler@phone.codes');
+Quest::spaw('phone/codes', 'App\Services\PhoneHandler:phone.codes');
+```
+
+The client calls `/phone/codes` with no extra path segment.
+
+### Manual `QuestRouter` / `Quest::router`
+
+These exist for custom wiring. They are easy to misuse (return types Laravel cannot turn into HTTP). Prefer `spawn` / `spaw`. Details: [QuestRouter](./refs/quester_router.md), [Quest](./refs/quest.md).
+
+## Client calls
+
+The Laravel route accepts any verb (`Route::any`). Quest then checks the attribute.
+
+**GET** — arguments as query string:
 
 ```js
-// And call it as this :
-axios.get('https://myhost.com/r84d2S1tM');
+axios.get('/quest/forest.tree', { params: { color: 'green' } });
 ```
 
-An other exemple :
+**POST** — JSON body (keys = parameter names):
+
+```js
+axios.post('/quest/phone.lookup', { number: '+243800000000' });
+```
+
+**Named Laravel route** (after `->name('quest')`):
 
 ```php
-#[QuestSpaw(ref: 'my quest flag ID', filePocket: 'guidPicture')]
-function yogaStage(int $moon, int $sunRise, UploadedFile $guidPicture = null): int
-{
-  # $guidPicture --> Illuminate\Http\UploadedFile
+route('quest', ['quest_ref' => 'forest.tree', 'color' => 'green']);
+```
 
-  return $moon + $sunRise;
+`quest_ref` is the route parameter Quest appends. Extra keys become query parameters.
+
+## Parameters and types
+
+Quest builds the argument list in **declaration order**, filling each parameter from:
+
+1. Request input whose key equals the parameter name (or its alias).
+2. An uploaded file, if this parameter is the `filePocket`.
+3. The Laravel container, if the type is bound (`App::bound($type)`).
+4. The parameter default, if the value is missing and a default exists.
+
+Otherwise Quest throws (`Hacp0012\Quest\core\Obstacle`) with a message pointing at the method.
+
+### Types accepted from the client
+
+`bool`, `int`, `float`, `string`, `array`, `mixed`, `null`.
+
+`array` may be a PHP array (JSON object/array already decoded by Laravel) or a JSON string.
+
+Union types are allowed (`int|float`, `string|null`, …). Container types can appear in unions.
+
+### Types Quest will not take from HTTP
+
+Arbitrary objects (`DateTime`, Eloquent models, DTOs not bound in the container, …). Bind the class in a service provider if Quest should construct it. That is how `Illuminate\Http\Request` works.
+
+### Aliases
+
+```php
+#[QuestSpaw(ref: 'forest.apples', alias: ['count' => 'max_weight', 'state' => 'quality'])]
+public function displayApples(int $count, string $color, string $state): array
+```
+
+The client sends `max_weight` and `quality`. `$color` stays `color`.
+
+`filePocket` always refers to the **PHP** parameter name.
+
+### Validation
+
+```php
+public function updateText(Request $request, string $com_id): string
+{
+    $validated = $request->validate([
+        'title' => 'required|string|max:120',
+        'text'  => 'required|string',
+    ]);
+
+    return $com_id;
 }
 ```
 
-```dart
-// So the call will simply be like this:
+Parameter types are not a substitute for FormRequest / `$request->validate()`.
 
-// Client code :
-dio.post("/quest/my quest flag ID", data: {'moon': 2, 'sunRise': 7});
-```
-
-Note that Quest takes care of passing parameters to your method. (And you can even pass it a file) as parameters, just give the parameter name to your file. (but you have to report it in filePocket)
-
-## <span id="fonctionement">🚧 How Quest works</span>
-
-Quest is based on PHP attributes. It goes through all your references and creates a registry of the methods you have marked.
-A method is marked by a reference key that serves as a reference point for quest to call your method.
-
-To create a reference:
+## Files
 
 ```php
-#[QuestSpaw(ref: 'reference.key')]
-functiton gong(): array
-```
+use Illuminate\Http\UploadedFile;
 
-## <span id="usage">🧩 Usage<span>
-
-Let's start by defining our route with Quest:
-
-```php
-# In your route file
-use Hacp0012\Quest\Quest;
-
-Route::get(uri: '/', action: fn() => view('home')); // Exemple ...
-
-$routes = [
-  Forest::class,
-  # Or specifie a directory:
-  // 'app/demo',
-];
-Quest::spawn(uri: 'quest', routes: $routes)->name('my.quest');
-```
-
-> **`Hacp0012\Quest`** is the main namespace. Contains the `Quest()` class and the `QuestRouter()` class and the `QuestSpawMethod` enum.
-> Then there is the namespace **`Hacp0012\Quest\Attributes`**, which contains the Quest attributes. Such as `QuestSpaw()` and `QuestSpawClass()`.
-
-You can add middlewares and such because Quest's static `spawn` function returns an object of type `Illuminate\Routing\Route` so it supports all other methods of the Route facade.
-
-> Note that the `Forest` class has been added to the list of routes in the `spaw(..., routes: [Forest::class])` method.
-
-Let's now define our Forest class which will contain our methods referenced by spaw. _punched_.
-
-```php
-// In your class
-class Forest
+#[QuestSpaw(ref: 'profile.photo', filePocket: 'photo')]
+public function storePhoto(string $user_id, UploadedFile $photo): string
 {
-  #[QuestSpaw(ref:'NAhLlRZW3g3Fbh30dZ')]
-  function tree(string $color): int
-  {
-    return $this->fruits();
-  }
+    return $photo->store('photos');
+}
+```
 
-  function fruits(): int
-  {
+- One file per method.
+- Parameter type must be `UploadedFile` or `mixed`.
+- Request method must be **POST**.
+- The form field name is the parameter name (`photo`), unless you aliased that parameter — then the client uses the alias, while `filePocket` still uses `photo`.
+
+```js
+const form = new FormData();
+form.append('user_id', '42');
+form.append('photo', file);
+axios.post('/quest/profile.photo', form);
+```
+
+## HTTP methods
+
+`SpawMethod`: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`.
+
+If omitted, Quest uses `config('quest.method')`, which defaults to `POST`.
+
+A mismatch between the incoming verb and the attribute throws an `Obstacle`.
+
+## Middleware
+
+Two different mechanisms:
+
+**1. Laravel middleware on the route** — this is the real security layer:
+
+```php
+Quest::spawn('quest', [Forest::class])->middleware(['auth:sanctum', 'throttle:60,1']);
+```
+
+**2. Attribute `middleware` — a filter.** Quest runs the method only if **at least one** of the names is already present on the current route. If none match, the method is skipped (empty response, no exception).
+
+```php
+#[QuestSpaw(ref: 'forest.secret', middleware: 'auth:sanctum')]
+public function secret(): array { /* ... */ }
+```
+
+Do not rely on (2) alone to protect an endpoint.
+
+## Class construction
+
+Quest creates a new instance for each call (unless the method is static; the instance is still built).
+
+Container-bound constructor arguments are resolved with `App::make()`. Extra primitives:
+
+```php
+use Hacp0012\Quest\Attributs\QuestSpawClass;
+
+#[QuestSpawClass(constructWith: ['locale' => 'fr'])]
+class ReportService
+{
+    public function __construct(Request $request, string $locale) {}
+}
+```
+
+`constructWith` must be an **associative** array. Values are primitives, not objects.
+
+## Responses
+
+### JSON (default)
+
+`jsonResponse: true` → `return response()->json($result)`.
+
+### Raw Laravel return
+
+`jsonResponse: false` → return a `View`, `RedirectResponse`, `StreamedResponse`, etc. unchanged.
+
+### Envelope: `QuestResponse`
+
+Adds `success`, `message`, and custom keys around the method’s return value **without changing the PHP return type**.
+
+```php
+use Hacp0012\Quest\QuestResponse;
+
+#[QuestSpaw(ref: 'forest.count')]
+public function countFruits(): int
+{
+    QuestResponse::setForJson(
+        ref: 'forest.count',
+        model: ['success' => true],
+        dataName: 'count',
+    )->setMessage('Ok');
+
     return 18;
-  }
-
-  #[QuestSpaw(ref: 'RrOWXRfKOjauvSpc7y', method: QuestSpawMethod::GET, jsonResponse: false)]
-  function displayAnApples(int $count): View
-  {
-    //...
-  }
 }
 ```
 
-And that's it, now you can start calling your methods punched (referenced) by their reference key `ref: 'NAhLlRZW3g3Fbh30dZ'`.
-
-Note that you can use any phrase as a reference. Although quest allows you to generate unique keys. You can use something like: _forest.app.tree.NAhLlRZW3g3Fbh30dZ_. [Or see the CLI command reference for more details](#ref_console)
-
-As in this example above:
-
-```dart
-// Code client :
-dio.get("/quest/NAhLlRZW3g3Fbh30dZ", data: {'color': 'green'});
+```json
+{ "success": true, "message": "Ok", "count": 18 }
 ```
+
+Initialize it at the **top** of the method. The `ref` must equal the attribute `ref`. See [QuestResponse](./refs/response.md).
+
+## Global class list and directories
+
+`routes/quest.php` is merged **after** the `routes` argument of `spawn` / `spaw`. Lookup order:
+
+1. Classes (and directories) passed to `spawn` / `spaw`
+2. Entries in `routes/quest.php`
+3. The empty default list inside Quest (`QuestRoutes::$routes`)
+
+A directory is a path from the project root (`base_path()`), for example `'app/Services'`. Quest:
+
+- Recurses into subfolders
+- Keeps `.php` files that contain `#[QuestSpaw`
+- Reads `namespace` and the **first** `class` in the file
+
+No namespace → the file is ignored.
+
+## CLI tools
+
+| Command | What it does |
+| --- | --- |
+| `quest:generate-ref [36] [--uuid]` | Random string or UUID for a new `ref` |
+| `quest:track-ref {ref}` | Class, method signature, file, attribute arguments |
+| `quest:find {keyword} [--full] [--with-comments]` | Search class, method, ref, or PHPDoc |
+| `quest:ref --list [--no-table] [--index=1,2]` | Table of all refs |
+| `quest:ref --generate=n` / `--g-uuid` / `--track=` | Shortcuts to the commands above |
+| `quest:publish` | Write `routes/quest.php` |
+| `php artisan about` | Includes the Quest version |
+
+The tracker discovers classes from `routes/quest.php` and by **including** the PHP files in `config('quest.base_routes')` (default: `routes/web.php`, `routes/api.php`) so that `Quest::spawn(…)` calls populate an internal list.
+
+If you register Quest from another file, add that file to `base_routes` or the tracker will miss those classes.
+
+PHPDoc is displayed by `track-ref` and `find`. Write `@return` so a `ref` is self-explanatory in the console.
+
+Details and flags: [CLI commands](./refs/commands.md).
+
+## Configuration
+
+`config/quest.php`:
 
 ```php
-// Or from your view blad file:
+use Hacp0012\Quest\QuestSpawMethod;
 
-route('my.quest', ['quest_ref' => 'RrOWXRfKOjauvSpc7y', 'count' => 9]);
-# It's simple when you have given a name to your route. `->name('quest')`.
+return [
+    'method' => QuestSpawMethod::POST,
 
+    'base_routes' => [
+        base_path('/routes/api.php'),
+        base_path('/routes/web.php'),
+    ],
+];
 ```
 
-_`quest_ref` is the parameter key of the route generated by Quest. The kind of parameters that we pass in the url: <https://moonsite.com/my/quest/{quest_ref}>_
+| Key | Role |
+| --- | --- |
+| `method` | Default `SpawMethod` / `QuestSpawMethod` when the attribute omits `method` |
+| `base_routes` | Files included by the CLI tracker to discover `Quest::spawn` / `Quest::spaw` |
 
-🔖 There is another way to call Quest. That is to pass QuestRouter and create a router object, like this:
+## Limitations
 
-```php
-Route::post('quest/{ref}', function(string $ref) {
-  $quest = new QuestRouter(questRef: $ref, routes: [QuestTest::class]);
+- One uploaded file per method (`filePocket`).
+- Client-sent types are JSON-friendly scalars and arrays only.
+- Attribute `middleware` is a name check, not Laravel middleware.
+- The first class in a scanned `.php` file is the only one registered from that file.
+- `ref` values are a public API; renaming one breaks clients.
+- Quest does not generate OpenAPI / Postman collections. The CLI tracker is the discovery tool.
 
-  return $quest->spawn();
-});
-```
+## FAQ
 
-Or
+**Can Quest live next to `Route::get` / `Route::post`?**  
+Yes.
 
-```php
-Route::post('quest/{ref}', function(string $ref) {
-  $quest = new Quest;
+**Empty HTTP response, no exception?**  
+Wrong `ref`, skipped by the middleware filter, or no matching class in the lists. Run `quest:track-ref`.
 
-  $data = $quest->router(questId: $ref, classes: [QuestTest::class]);
+**`GET` with a JSON body?**  
+Browsers and many clients ignore GET bodies. Use query parameters.
 
-  return $data;
-});
-```
+**Service container?**  
+Yes. Bound types on the method or the constructor are built with `App::make()`.
 
-⚠️ Even though this is not the cleanest method, I advise you not to use it because it can give you weird return types that even Laravel's `Service container` won't be able to interpret.
+**Private / protected methods?**  
+Rejected. Only public (and static) methods.
 
-### <span id="service_container">Service container</span>
+## API reference
 
-Laravel provides an automatic dependency injection system that it calls Service Container. It is able to construct an object that you have declared as a parameter.
-
-Take this as a reminder:
-
-```php
-Route::get('/', function(Request $request, int $number) {
-  // The container service automatically builds $request for you.
-});
-```
-
-Well Quest can't spoil this happiness. Quest also resolves your objects declared in the parameters.
-In any case feel free to do what you want.
-
-🪄 _Try and you will know._ 🧙‍♂️
-
-## <span id="ref_console">👽 CLI Commandes</span>
-
-> `php artisan quest:ref [--list [--no-table] [--index=n]] [--generate=n] [--track='']` [see in doc.](./refs/commands.md)
-
-> `php artisan quest:generate-ref [36] [--uuid]`
-
-Generate a reference key. But this does not prevent you from taking any text for reference. This is just a help, to allow you to do something unique.
-
-_If you add the `--uuid` option, it will generate a UUID key and ignore the length you specified. UUIDs are 36 characters long (they are unique anyway)_
-
-By default the command generates 36 random characters.
-
-<kbd>php artisan quest:generate-ref</kbd>
-
-![Generated ref code](./assets/generated_ref.png)
-
-> `php artisan quest:track-ref [ref-id]`
-
-Track the reference of a pointed method (spawed)
-
-Among the good things, there is the ref tracker. This tracker is great, it allows you to find yourself more easily and find the implementation of your method.
-
-<kbd>php artisan quest:track-ref RrOWXRfKOjauvSpc7y</kbd>
-
-![Tracked reference result](./assets/ref.png)
-
-Because let's be serious, the reference key system can be a little more constipating when you don't have a very solid architecture or when you are a beginner. This is why I advise you not to rely only on the keys generated by the `quest:generate-ref` command, get into the habit of adding a few words called **human readable**. Ex. 'my.forest.trees.meXRQbm0WQP6ZpAN5U'
-
-To check the quest version:
-
-> `php artisan about`
-
-_This is an internal command of Laravel_
-
-## <span id="api_ref">🔆 Api reference</span>
-
-- [Quest Attributs](./refs/attributs.md)
-- [Quest class](./refs/quest.md)
-- [Quest Router](./refs/quester_router.md)
-- [CLI Commands](./refs/commands.md)
-
-## Best practices
-
-### The type of return in comment
-
-Let's take this example:
-
-```php
-/** @return stdClass {state:UPDATED|FAILED} */
-#[QuestSpaw(ref: 'com.update.text.628L7cLg1RGTvaxkgg')]
-function updateText(string $com_id, string $title, string $text, string $status): stdClass
-{
-  $return = new stdClass;
-
-  $state = false;
-
-  // ...
-
-  $return->state = $state ? 'UPDATED' : 'FAILED';
-
-  return $return;
-}
-```
-
-Please specify the return type and details about it, because the tracker returns the PHP-Doc comments of the method. This will help you to have a direct idea of ​​what is returned by the call.
-
-![Screen shot](./assets/2024-09-09-174755.png)
-
-## Things to add
-
-- Temporary routes.
-
-## <span id="#faq">FAQ</span>
-
-### How can I do my `request` validations ?
-
-First of all the method parameters are also another type of validation but low level.
-You can retrieve all your `request parameters` via the `Request` object like this:
-
-```php
-function myMethod(Request $request, array $myQueryParams)
-{
-  $validateds = $request->validate([...], [...]);
-
-  $validateds = request()->validate(...);
-
-  # ...
-}
-```
-
-> By default, quest supports some basic (native) types `['bool', 'int', 'float', 'string', 'null', 'array', 'mixed', UploadedFile::class]` and the one you linked in Service Container via Provider. Other types are not supported. The reason is that over HTTP(S) we don't often transfer objects. It's often text and often formatted in JSON. So the basic (native) types are often the same types that the JSON annotation supports.
+- [Attributes](./refs/attributs.md)
+- [Quest](./refs/quest.md)
+- [QuestResponse](./refs/response.md)
+- [QuestRouter](./refs/quester_router.md)
+- [CLI commands](./refs/commands.md)

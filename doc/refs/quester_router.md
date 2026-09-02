@@ -1,42 +1,81 @@
-# QuestRouter [class]
+# QuestRouter
 
-## constructor
+Class: `Hacp0012\Quest\QuestRouter`.
 
-Create a new class instance.
+Low-level helper used by `Quest::spawn` and `Quest::spaw`. It loads the class lists, expands directories, and delegates to `Quest::router()`.
 
-```php
-QuestRouter(protected string $questRef, array $routes = [])
-```
+**In application code, call `Quest::spawn` / `Quest::spaw`.** Instantiating `QuestRouter` in a closure is supported but easy to get wrong: a missed `ref` returns nothing (`QuestReturnVoid` is swallowed), which looks like a blank HTTP response.
 
-@param string $questRef Reference ID.
+---
 
-@param array<int, string> $routes An array of spawned class's. But class's listed
-here are not visible by the Ref-Tracker in console. The Class referenced here are private to this route.
-If `$routes` is not empty, only the global routes `$routes` a accessible. The base routes quest are not quested.
-
-__Routes precedence__ :
-
-1. Local routes : defined in spawed $routes parameter.
-2. Global Base routes : defined in your routes/quest.php.
-3. Defaults Global routes : default quest routes.
-
-## spawn
-
-Begin the quest by making their way. Spawn a way.
+## Constructor
 
 ```php
-spawn(): mixed
+public function __construct(protected string $questRef, array $routes = [])
 ```
 
-No parameter.
+| Argument | Role |
+| --- | --- |
+| `$questRef` | The `ref` to dispatch. With `spawn`, this is the `{quest_ref}` route parameter. With `spaw`, it is the ref you bound at registration. |
+| `$routes` | Extra class names / directories for **this** request. Merged **in front of** the global list. |
 
-@return mixed
+On construct, QuestRouter:
+
+1. Ensures `routes/quest.php` exists (`createRouteFile()`).
+2. Loads `routesList()` (file + package defaults).
+3. Sets `$this->routes = array_merge($routes, $globalList)` so local classes are searched first.
+
+Both local and global classes remain reachable. The first matching `ref` wins.
+
+---
+
+## `spawn`
 
 ```php
-// Ex: 
-Route::get('/home', function() {
-  $router = new QuestRouter(questRef: 'HhXEo0019', routes: [DemoClass::class]);
-
-  return $router->spaw(); // 🥷🚩 Launch the quest and return result as response.
-})
+public function spawn(): mixed
 ```
+
+Runs `Quest::router($this->questRef, $this->routes)`.
+
+If the result is `QuestReturnVoid` (no method matched, or middleware filter skipped it), the method returns `null` (implicit empty return). Otherwise it returns the method result / JSON response.
+
+```php
+// Not recommended — prefer Quest::spawn()
+Route::post('quest/{ref}', function (string $ref) {
+    $router = new QuestRouter(questRef: $ref, routes: [QuestTest::class]);
+    return $router->spawn();
+});
+```
+
+---
+
+## Static helpers
+
+### `createRouteFile()`
+
+Writes `routes/quest.php` if it is missing. Same effect as `php artisan quest:publish`.
+
+### `routesList(): array`
+
+Returns the merge of:
+
+1. `return […]` from `routes/quest.php` (if the file exists)
+2. `QuestRoutes::$routes` (package default, empty)
+
+### `exploreIfIsFolder(array $routes): array`
+
+For each entry:
+
+- If it is a class (`new ReflectionClass` succeeds) → keep it.
+- Else if `base_path($entry)` is a directory → scan for classes that contain `#[QuestSpaw`.
+- Else → throw `Obstacle` (`"$entry" is not correct sub directory of Laravel project base path.`).
+
+Duplicates are removed.
+
+---
+
+## Related
+
+- [Quest](./quest.md) — `spawn` / `spaw` (preferred API)
+- [Attributes](./attributs.md)
+- [Guide](../README.md)
